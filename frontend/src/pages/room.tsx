@@ -167,6 +167,9 @@ const Room = () => {
 
   return (
     <div className="h-screen w-screen flex gap-10 items-center">
+      <h1 className="absolute top-2 left-1/2 font-bold text-2xl underline">
+        {roomName}
+      </h1>
       <aside className="z-50 h-screen w-90 border-r-1">
         <ChatSidebar
           chatMessages={chatMessages}
@@ -177,7 +180,6 @@ const Room = () => {
       <div>{userMediaMemo}</div>
 
       <div>
-        <p className="font-bold">{roomName}</p>
         {isConnected ? (
           <Button onClick={leaveRoom} disabled={!isConnected}>
             Leave
