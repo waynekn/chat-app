@@ -10,7 +10,7 @@ const UserMedia = ({ onStream }: UserMediaProps) => {
   useEffect(() => {
     const playUserMedia = async () => {
       try {
-        const constraints = { /*video: true,*/ audio: true };
+        const constraints = { video: true, audio: true };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
