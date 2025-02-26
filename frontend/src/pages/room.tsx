@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 
 import { Button } from "@/components/ui/button";
 import UserMedia from "@/components/user-media";
+import ChatSidebar from "@/components/chat-sidebar";
 import RemoteMedia from "@/components/remote-media";
 
 import { handleSDPResponse, generateSDPOffer } from "@/utils/sdp";
@@ -12,8 +13,12 @@ import { SdpResponse, SocketRequest } from "@/types/socket";
 const Room = () => {
   const { roomName } = useParams();
 
-  const [message, setMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const userMediaMemo = useMemo(
+    () => <UserMedia onStream={handleStream} />,
+    []
+  );
 
   const userIdRef = useRef<string>(null);
   const socketRef = useRef<WebSocket>(null);
@@ -56,13 +61,13 @@ const Room = () => {
     }
   }, []);
 
-  const handleStream = (stream: MediaStream) => {
+  function handleStream(stream: MediaStream) {
     if (peerConnectionRef.current) {
       stream.getTracks().forEach((track) => {
         peerConnectionRef.current?.addTrack(track, stream);
       });
     }
-  };
+  }
 
   const sendSdpOffer = useCallback((sdp: RTCSessionDescriptionInit) => {
     if (!sdp || !userIdRef.current) {
@@ -109,7 +114,7 @@ const Room = () => {
         const res = JSON.parse(e.data);
 
         if (res.message) {
-          console.log(res.message);
+          setChatMessages((prevMessages) => [...prevMessages, res.message]);
         } else if (res.sdp) {
           const data = res as SdpResponse;
           const response = await handleSDPResponse(
@@ -137,7 +142,7 @@ const Room = () => {
     }
   };
 
-  const sendMsg = () => {
+  const sendMsg = (message: string) => {
     const trimmedMsg = message.trim();
     if (trimmedMsg === "") {
       return;
@@ -151,7 +156,6 @@ const Room = () => {
   const makeSocReq = (req: SocketRequest) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify(req));
-      setMessage("");
     }
   };
 
@@ -162,10 +166,15 @@ const Room = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex gap-10 justify-center items-center">
-      <div>
-        <UserMedia onStream={handleStream} />
-      </div>
+    <div className="h-screen w-screen flex gap-10 items-center">
+      <aside className="z-50 h-screen w-90 border-r-1">
+        <ChatSidebar
+          chatMessages={chatMessages}
+          sendMsg={sendMsg}
+          isSocketConnected={isConnected}
+        />
+      </aside>
+      <div>{userMediaMemo}</div>
 
       <div>
         <p className="font-bold">{roomName}</p>
@@ -178,17 +187,6 @@ const Room = () => {
             Join
           </Button>
         )}
-
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="border-2 border-red-500"
-        />
-
-        <Button onClick={sendMsg} disabled={!isConnected || !message}>
-          Send Message
-        </Button>
       </div>
 
       <RemoteMedia remoteMedia={remoteStream} />
