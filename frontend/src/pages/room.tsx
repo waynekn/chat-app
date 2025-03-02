@@ -15,15 +15,16 @@ const Room = () => {
 
   const [isConnected, setIsConnected] = useState(false);
   const [chatMessages, setChatMessages] = useState<string[]>([]);
-  const userMediaMemo = useMemo(
-    () => <UserMedia onStream={handleStream} />,
-    []
-  );
 
   const userIdRef = useRef<string>(null);
   const socketRef = useRef<WebSocket>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  const userMediaMemo = useMemo(
+    () => <UserMedia peerConnectionRef={peerConnectionRef} />,
+    []
+  );
 
   useEffect(() => {
     if (!userIdRef.current) {
@@ -60,14 +61,6 @@ const Room = () => {
       };
     }
   }, []);
-
-  function handleStream(stream: MediaStream) {
-    if (peerConnectionRef.current) {
-      stream.getTracks().forEach((track) => {
-        peerConnectionRef.current?.addTrack(track, stream);
-      });
-    }
-  }
 
   const sendSdpOffer = useCallback((sdp: RTCSessionDescriptionInit) => {
     if (!sdp || !userIdRef.current) {
