@@ -55,7 +55,6 @@ const UserMedia = ({ peerConnectionRef }: UserMediaProps) => {
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
-      videoRef.current.pause();
     }
 
     if (peerConnectionRef.current) {
